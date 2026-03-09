@@ -81,7 +81,11 @@ export async function POST(req: NextRequest) {
 
     const raw =
       message.content[0].type === "text" ? message.content[0].text : "{}";
-    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    const cleaned = raw
+      .replace(/```json|```/g, "")
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+      .trim();
+    const parsed = JSON.parse(cleaned);
 
     return NextResponse.json(parsed);
   } catch (e) {
