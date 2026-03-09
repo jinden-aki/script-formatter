@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { COLORS, SAMPLE_TEXT } from "@/lib/constants";
+import FileUploader from "@/components/FileUploader";
 
 interface InputPanelProps {
   onConvert: (text: string) => void;
@@ -10,9 +11,24 @@ interface InputPanelProps {
 
 export default function InputPanel({ onConvert, isLoading }: InputPanelProps) {
   const [text, setText] = useState("");
+  const [activeTab, setActiveTab] = useState<"file" | "text">("file");
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const lineCount = text ? text.split("\n").length : 0;
   const charCount = text.length;
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "10px 16px",
+    fontSize: "13px",
+    fontWeight: active ? "bold" : "normal",
+    color: active ? COLORS.primary : COLORS.textSub,
+    background: active ? COLORS.surface : "transparent",
+    border: "none",
+    borderBottom: active ? `2px solid ${COLORS.primary}` : "2px solid transparent",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  });
 
   return (
     <div
@@ -56,55 +72,116 @@ export default function InputPanel({ onConvert, isLoading }: InputPanelProps) {
         テロップ（Ｔ『...』）、場面転換（× × ×）に対応しています。
       </div>
 
-      <div style={{ position: "relative" }}>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="脚本テキストをここに貼り付けてください..."
-          style={{
-            width: "100%",
-            minHeight: "300px",
-            padding: "16px",
-            border: `1px solid ${COLORS.border}`,
-            borderRadius: "8px",
-            fontSize: "13px",
-            fontFamily: '"Noto Sans Mono", "Courier New", monospace',
-            lineHeight: "1.8",
-            resize: "vertical",
-            outline: "none",
-            boxSizing: "border-box",
-            color: COLORS.text,
-            background: COLORS.surface,
-          }}
-        />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: "8px",
-            fontSize: "12px",
-            color: COLORS.textMuted,
-          }}
+      {/* タブ切り替え */}
+      <div
+        style={{
+          display: "flex",
+          borderBottom: `1px solid ${COLORS.border}`,
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          onClick={() => setActiveTab("file")}
+          style={tabStyle(activeTab === "file")}
         >
-          <span>
-            {lineCount} 行 / {charCount.toLocaleString()} 文字
-          </span>
-          <button
-            onClick={() => setText(SAMPLE_TEXT)}
+          📄 Wordファイル
+        </button>
+        <button
+          onClick={() => setActiveTab("text")}
+          style={tabStyle(activeTab === "text")}
+        >
+          ✏️ テキスト入力
+        </button>
+      </div>
+
+      {/* タブコンテンツ */}
+      {activeTab === "file" ? (
+        <div>
+          <FileUploader
+            onTextExtracted={(extracted) => {
+              setText(extracted);
+              setFileError(null);
+            }}
+            onError={(msg) => setFileError(msg)}
+          />
+          {fileError && (
+            <div
+              style={{
+                marginTop: "8px",
+                background: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                borderRadius: "6px",
+                padding: "8px 12px",
+                fontSize: "12px",
+                color: "#DC2626",
+              }}
+            >
+              {fileError}
+            </div>
+          )}
+          {text && (
+            <div
+              style={{
+                marginTop: "12px",
+                fontSize: "12px",
+                color: COLORS.textMuted,
+              }}
+            >
+              {lineCount} 行 / {charCount.toLocaleString()} 文字を抽出しました
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ position: "relative" }}>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="脚本テキストをここに貼り付けてください..."
             style={{
-              background: "none",
-              border: "none",
-              color: COLORS.primary,
-              cursor: "pointer",
+              width: "100%",
+              minHeight: "300px",
+              padding: "16px",
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontFamily: '"Noto Sans Mono", "Courier New", monospace',
+              lineHeight: "1.8",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+              color: COLORS.text,
+              background: COLORS.surface,
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "8px",
               fontSize: "12px",
-              textDecoration: "underline",
+              color: COLORS.textMuted,
             }}
           >
-            サンプルテキストを挿入
-          </button>
+            <span>
+              {lineCount} 行 / {charCount.toLocaleString()} 文字
+            </span>
+            <button
+              onClick={() => setText(SAMPLE_TEXT)}
+              style={{
+                background: "none",
+                border: "none",
+                color: COLORS.primary,
+                cursor: "pointer",
+                fontSize: "12px",
+                textDecoration: "underline",
+              }}
+            >
+              サンプルテキストを挿入
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ marginTop: "24px", textAlign: "center" }}>
         <button

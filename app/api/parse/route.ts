@@ -11,24 +11,53 @@ const SYSTEM_PROMPT = `あなたは日本の脚本フォーマット専門家で
   "subtitle": "第N稿",
   "author": "作者名",
   "date": "日付",
-  "characters": [{"name": "キャラ名", "desc": "説明"}],
+  "characters": [{"name": "キャラ名（スペース除去済み）", "desc": "説明"}],
   "scenes": [
     {"type": "episode_header", "text": "【N話】"},
     {"type": "scene_heading", "number": "1", "location": "場所名", "time": "時間帯"},
     {"type": "action", "text": "ト書き本文"},
     {"type": "dialogue", "character": "キャラ名", "line": "台詞（カギ括弧なし）"},
-    {"type": "transition", "text": "×　　×　　×"}
+    {"type": "transition", "text": "転換テキスト"}
   ]
 }
 
-判定ルール:
-- 「【N話】」「第N話」→ episode_header
-- 数字/◯で始まる「場所（時間）」形式の行 → scene_heading（numberは数字のみ）
-- 「キャラ名「台詞」」→ dialogue（lineにカギ括弧を含めない）
-- 「Ｔ　『...』」「×　×　×」→ transition
-- モノローグ（Ｍ）・声つきキャラもdialogueで処理
-- それ以外の地の文 → action
-- 登場人物リストは charactersに格納`;
+===判定ルール===
+
+【タイトルブロック】
+- 冒頭の『タイトル』行 → title
+- 「第N稿」形式 → subtitle
+- 日付形式（YYYY/MM/DD等）→ date
+- タイトルと日付の間の人名 → author
+
+【登場人物】
+- 「【登場人物】」以降の「名前（年齢）　説明」形式の行 → characters
+- キャラ名のスペース（全角・半角）は除去して格納（例:「小川　裕　太」→「小川裕太」）
+
+【話数ヘッダー】
+- 「【N話】」「【第N話】」→ episode_header
+
+【シーン柱】
+- 「N.  場所（時間）」「N．場所（時間）」（全角・半角数字両対応）→ scene_heading
+- ○や◯が付いている場合も同様に処理
+- numberは数字のみ抽出（「1」「２」など）
+- timeが記載されていない場合はnullまたは省略
+
+【台詞】
+- 「キャラ名「台詞」」形式 → dialogue
+- キャラ名のスペースは除去して格納
+- 「名前Ｍ」「名前M」はモノローグとして処理（characterにそのまま格納）
+- 「名前の声」もdialogueとして処理
+- lineにカギ括弧を含めない
+
+【転換・テロップ】
+- 「×　×　×」「×　　　　×　　　　×」等（全角スペース数不問）→ transition
+- 「Ｔ　『テロップ』」「Ｔ『テロップ』」→ transition
+
+【ト書き】
+- 上記以外の地の文・描写・カメラ指定 → action
+
+【除外】
+- 空行・区切り線のみの行は除外`;
 
 export async function POST(req: NextRequest) {
   try {
