@@ -72,15 +72,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const message = await client.messages.create({
+    const stream = client.messages.stream({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 32000,
+      max_tokens: 16000,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: text }],
     });
 
-    const raw =
-      message.content[0].type === "text" ? message.content[0].text : "{}";
+    const raw = await stream.finalText();
     const cleaned = raw
       .replace(/```json|```/g, "")
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
